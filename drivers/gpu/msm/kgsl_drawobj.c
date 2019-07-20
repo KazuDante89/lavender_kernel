@@ -79,7 +79,9 @@ void kgsl_dump_syncpoints(struct kgsl_device *device,
 {
 	struct kgsl_drawobj_sync_event *event;
 	unsigned int i;
+#ifdef CONFIG_SYNC_DEBUG
 	unsigned long flags;
+#endif
 
 	for (i = 0; i < syncobj->numsyncs; i++) {
 		event = &syncobj->synclist[i];
@@ -102,6 +104,7 @@ void kgsl_dump_syncpoints(struct kgsl_device *device,
 			break;
 		}
 		case KGSL_CMD_SYNCPOINT_TYPE_FENCE:
+#ifdef CONFIG_SYNC_DEBUG
 			spin_lock_irqsave(&event->handle_lock, flags);
 
 			if (event->handle)
@@ -112,6 +115,7 @@ void kgsl_dump_syncpoints(struct kgsl_device *device,
 				dev_err(device->dev, "  fence: invalid\n");
 
 			spin_unlock_irqrestore(&event->handle_lock, flags);
+#endif
 			break;
 		}
 	}
@@ -156,9 +160,11 @@ static void syncobj_timer(unsigned long data)
 			spin_lock_irqsave(&event->handle_lock, flags);
 
 			if (event->handle != NULL) {
+#ifdef CONFIG_SYNC_DEBUG
 				dev_err(device->dev, "       [%d] FENCE %s\n",
 				i, event->handle->fence ?
 					event->handle->fence->name : "NULL");
+#endif
 				kgsl_sync_fence_log(event->handle->fence);
 			}
 
