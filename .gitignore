@@ -124,3 +124,6 @@ Android.bp
 
 # OutPut
 out
+
+# Clang's compilation database file
+/compile_commands.json
