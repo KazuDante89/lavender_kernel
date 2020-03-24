@@ -649,9 +649,9 @@ ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS	+= -Os
 else
 KBUILD_CFLAGS   += -O3
+endif
 
 ifeq ($(cc-name),clang)
-KBUILD_CFLAGS	+= -mcpu=kryo -mtune=kryo
 KBUILD_CFLAGS	+= $(call cc-option, -mllvm -polly) \
 		   $(call cc-option, -mllvm -polly-run-dce) \
 		   $(call cc-option, -mllvm -polly-run-inliner) \
@@ -660,7 +660,6 @@ KBUILD_CFLAGS	+= $(call cc-option, -mllvm -polly) \
 		   $(call cc-option, -mllvm -polly-detect-keep-going) \
 		   $(call cc-option, -mllvm -polly-vectorizer=stripmine) \
 		   $(call cc-option, -mllvm -polly-invariant-load-hoisting)
-KBUILD_AFLAGS	+= -mcpu=kryo -mtune=kryo
 endif
 
 ifdef CONFIG_CC_WERROR
