@@ -650,8 +650,8 @@ KBUILD_CFLAGS	+= -Os
 else
 KBUILD_CFLAGS   += -O3
 ifeq ($(cc-name),clang)
-KBUILD_CFLAGS	+= -mcpu=kryo -mtune=kryo
-KBUILD_AFLAGS   += -mcpu=kryo -mtune=kryo
+KBUILD_CFLAGS	+= -mcpu=cortex-a53 -mtune=cortex-a53
+KBUILD_AFLAGS   += -mcpu=cortex-a53 -mtune=cortex-a53
 endif
 endif
 
