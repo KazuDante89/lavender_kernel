@@ -489,7 +489,7 @@ config TCP_CONG_CUBIC
 
 config TCP_CONG_WESTWOOD
 	tristate "TCP Westwood+"
-	default m
+	default y
 	---help---
 	TCP Westwood+ is a sender-side only modification of the TCP Reno
 	protocol stack that optimizes the performance of TCP congestion
@@ -619,7 +619,7 @@ config TCP_CONG_DCTCP
 
 config TCP_CONG_CDG
 	tristate "CAIA Delay-Gradient (CDG)"
-	default n
+	default y
 	---help---
 	CAIA Delay-Gradient (CDG) is a TCP congestion control that modifies
 	the TCP sender in order to:
