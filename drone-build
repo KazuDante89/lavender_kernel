@@ -82,58 +82,6 @@ build_newcam(){
 	fi
 }
 
-build_oldcam_uv(){
-	print "Building OLDCAM UV..." blue
-	git apply patch/uv
-	make $args lavender-perf_defconfig && make $args
-	if [ $? -ne 0 ]; then
-    errored "Error while building oldcam uv!"
-    else
-    git reset --hard
-    export zipname="$NAME-Kernel-$version-OLDCAM-UV-$date.zip"
-	mkzip
-	fi
-}
-
-build_newcam_uv(){
-	print "Building NEWCAM UV..." blue
-	git apply patch/newcam && git apply patch/uv
-	make $args lavender-perf_defconfig && make $args
-	if [ $? -ne 0 ]; then
-    errored "Error while building newcam uv!"
-    else
-    git reset --hard
-    export zipname="$NAME-Kernel-$version-NEWCAM-UV-$date.zip"
-	mkzip
-	fi
-}
-
-build_oldcam_66hz(){
-	print "Building OLDCAM 66Hz..." blue
-	git apply patch/66hz
-	make $args lavender-perf_defconfig && make $args
-	if [ $? -ne 0 ]; then
-    errored "Error while building oldcam 66Hz!"
-    else
-    git reset --hard
-    export zipname="$NAME-Kernel-$version-OLDCAM-66HZ-$date.zip"
-	mkzip
-	fi
-}
-
-build_newcam_66hz(){
-	print "Building NEWCAM 66Hz..." blue
-	git apply patch/66hz && git apply patch/newcam
-	make $args lavender-perf_defconfig && make $args
-	if [ $? -ne 0 ]; then
-    errored "Error while building newcam 66Hz!"
-    else
-    git reset --hard
-    export zipname="$NAME-Kernel-$version-NEWCAM-66HZ-$date.zip"
-	mkzip
-	fi
-}
-
 function telegram_notify(){
     curl -s https://api.telegram.org/bot"${bot_token}"/sendMessage -d parse_mode="Markdown" -d text="${1}" -d chat_id="${chat_id}"
 }
@@ -163,6 +111,9 @@ mkzip(){
 
 	clean
 	build_oldcam
+
+	clean
+	build_newcam
 
 	END=$(date +"%s")
 	KDURTION=$((END - START))
