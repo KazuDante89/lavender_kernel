@@ -3,7 +3,7 @@ clang_path="${HOME}/cbl/bin/clang"
 gcc_path="${HOME}/cbl/bin/aarch64-linux-gnu-"
 gcc_32_path="${HOME}/cbl/bin/arm-linux-gnueabi-"
 
-NAME=ShadowBoarder
+NAME=PaperMoon
 version=R5.0
 
 source=`pwd`
