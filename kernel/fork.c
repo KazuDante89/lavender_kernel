@@ -80,6 +80,7 @@
 #include <linux/kcov.h>
 #include <linux/cpufreq_times.h>
 #include <linux/devfreq_boost.h>
+#include <linux/sched/sysctl.h>
 
 #include <asm/pgtable.h>
 #include <asm/pgalloc.h>
@@ -1804,6 +1805,12 @@ long _do_fork(unsigned long clone_flags,
 	if (task_is_zygote(current)) {
 		devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW,1250);
     }
+
+    if (task_is_zygote(current)) {
+		sysctl_sched_energy_aware = 0;
+	} else {
+		sysctl_sched_energy_aware = 1;
+}
 	/*
 	 * Determine whether and which event to report to ptracer.  When
 	 * called from kernel_thread or CLONE_UNTRACED is explicitly
