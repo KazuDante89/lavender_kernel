@@ -94,6 +94,9 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/task.h>
 
+u16 app_launch_boost_ms=1250;
+module_param_named(app_launch_boost_ms, app_launch_boost_ms, short, 0644);
+
 /*
  * Minimum number of threads to boot the kernel
  */
@@ -1801,9 +1804,9 @@ long _do_fork(unsigned long clone_flags,
 	int trace = 0;
 	long nr;
 
-	/* Boost DDR to the max for 1250 ms when userspace launches an app */
-	if (task_is_zygote(current)) {
-		devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW,1250);
+	/* Boost DDR to the max when userspace launches an app */
+	if (app_launch_boost_ms && task_is_zygote(current)) {
+		devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW,app_launch_boost_ms);
     }
 
     if (task_is_zygote(current)) {
