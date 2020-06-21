@@ -79,6 +79,7 @@
 #include <linux/sysctl.h>
 #include <linux/kcov.h>
 #include <linux/cpufreq_times.h>
+#include <linux/cpu_input_boost.h>
 #include <linux/devfreq_boost.h>
 #include <linux/sched/sysctl.h>
 
@@ -1807,6 +1808,7 @@ long _do_fork(unsigned long clone_flags,
 	/* Boost DDR to the max when userspace launches an app */
 	if (app_launch_boost_ms && task_is_zygote(current)) {
 		devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW,app_launch_boost_ms);
+		cpu_input_boost_kick_max(app_launch_boost_ms);
     }
 
     if (task_is_zygote(current)) {
