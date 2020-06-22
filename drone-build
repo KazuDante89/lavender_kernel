@@ -38,7 +38,6 @@ case ${2} in
 }
 
 args="CC=$clang_path \
-	CLANG_TRIPLE=aarch64-linux-gnu- \
 	CROSS_COMPILE=$gcc_path \
 	AR=${HOME}/cbl/bin/llvm-ar \
 	NM=${HOME}/cbl/bin/llvm-nm \
