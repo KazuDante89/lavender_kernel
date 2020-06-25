@@ -50,8 +50,6 @@ args="CC=$clang_path \
 	-j$(nproc --all) "
 
 clean(){
-	make mrproper
-	make $args mrproper
 	rm -rf out
 }
 
