@@ -53,7 +53,7 @@ clean(){
 	rm -rf out
 }
 
-export KBUILD_BUILD_USER="lavender"
+export KBUILD_BUILD_USER="PaperMoon"
 export KBUILD_BUILD_HOST="Ratoriku"
 
 build_oldcam(){
@@ -114,5 +114,4 @@ mkzip(){
 
 	END=$(date +"%s")
 	KDURTION=$((END - START))
-	telegram_notify "Done!"
-	telegram_notify "Cost time $((KDURTION / 60)) min $((KDURTION % 60)) s"
+	telegram_notify "Done! Cost time $((KDURTION / 60)) min $((KDURTION % 60)) s"
