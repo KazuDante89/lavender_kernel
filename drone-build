@@ -4,7 +4,7 @@ gcc_path="${HOME}/cbl/bin/aarch64-linux-gnu-"
 gcc_32_path="${HOME}/cbl/bin/arm-linux-gnueabi-"
 
 NAME=PaperMoon
-version=R5.2-lavender
+version=R5.3-lavender
 
 source=`pwd`
 START=$(date +"%s")
