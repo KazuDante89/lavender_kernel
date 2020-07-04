@@ -25,6 +25,10 @@
 
 #define FG_GEN3_DEV_NAME	"qcom,fg-gen3"
 
+#ifdef CONFIG_FORCE_FAST_CHARGE
+#include <linux/fastchg.h>
+#endif
+
 #define PERPH_SUBTYPE_REG		0x05
 #define FG_BATT_SOC_PMI8998		0x10
 #define FG_BATT_INFO_PMI8998		0x11
@@ -3372,13 +3376,20 @@ static int fg_get_time_to_full_locked(struct fg_chip *chip, int *val)
 	vbatt_avg /= MILLI_UNIT;
 
 	/* clamp ibatt_avg to iterm */
+#ifdef CONFIG_FORCE_FAST_CHARGE
+	if (force_fast_charge > 0) {
 	if (msoc <= 80) {
 		if (ibatt_avg < 1000)
 			ibatt_avg = 1000; /* force consistent minumum charging current 1000mA upto 90% battery */
 	} else {
 		if (ibatt_avg < abs(chip->dt.sys_term_curr_ma))
 			ibatt_avg = abs(chip->dt.sys_term_curr_ma);
+		}
 	}
+#else
+		if (ibatt_avg < abs(chip->dt.sys_term_curr_ma))
+			ibatt_avg = abs(chip->dt.sys_term_curr_ma);
+#endif
 
 	fg_dbg(chip, FG_TTF, "ibatt_avg=%d\n", ibatt_avg);
 	fg_dbg(chip, FG_TTF, "vbatt_avg=%d\n", vbatt_avg);
