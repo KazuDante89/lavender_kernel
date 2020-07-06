@@ -46,7 +46,7 @@ extern bool enable_gesture_mode;
 extern bool synaptics_gesture_enable_flag;
 #endif
 
-static unsigned int framerate_override;
+static unsigned int framerate_override=60;
 module_param(framerate_override, uint, 0444);
 
 bool ESD_TE_status = false;
