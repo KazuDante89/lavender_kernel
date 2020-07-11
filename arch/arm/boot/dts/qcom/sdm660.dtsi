@@ -1330,8 +1330,7 @@
 		qcom,cpulist = <&CPU0 &CPU1 &CPU2 &CPU3>;
 		qcom,target-dev = <&mincpubw>;
 		qcom,core-dev-table =
-                        < 902400 762 >,
-                        < 1401600 2086 >,
+                        < 1401600 2597 >,
                         < 1881600 3879 >;
 	};
 
