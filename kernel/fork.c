@@ -95,7 +95,7 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/task.h>
 
-u16 app_launch_boost_ms=1250;
+u16 app_launch_boost_ms=850;
 module_param_named(app_launch_boost_ms, app_launch_boost_ms, short, 0644);
 
 /*
