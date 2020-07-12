@@ -216,7 +216,8 @@
 		qcom,mdss-dsi-panel-status-check-mode = "reg_read";
 		qcom,mdss-dsi-panel-status-read-length = <1>;
 		qcom,mdss-dsi-panel-status-value = <0x1c>;
-		qcom,mdss-dsi-panel-max-error-count = <3>;
+		qcom,partial-update-enabled = "single_roi";
+		qcom,panel-roi-alignment = <2 2 4 2 1080 2>;
  
 		cm,mdss-livedisplay-cabc-cmd = [
 				15 01 00 00 00 00 02 55 00
