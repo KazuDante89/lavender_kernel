@@ -3,8 +3,8 @@ clang_path="${HOME}/cbl/bin/clang"
 gcc_path="${HOME}/cbl/bin/aarch64-linux-gnu-"
 gcc_32_path="${HOME}/cbl/bin/arm-linux-gnueabi-"
 
-NAME=PaperMoon
-version=R5.4-lavender
+NAME=IceCream
+version=R5.4
 
 source=`pwd`
 START=$(date +"%s")
@@ -53,7 +53,7 @@ clean(){
 	rm -rf out
 }
 
-export KBUILD_BUILD_USER="PaperMoon"
+export KBUILD_BUILD_USER="IceCream"
 export KBUILD_BUILD_HOST="Ratoriku"
 
 build_oldcam(){
@@ -62,7 +62,7 @@ build_oldcam(){
 	if [ $? -ne 0 ]; then
     errored "Error while building for oldcam!"
     else
-    export zipname="$NAME-Kernel-$version-OLDCAM-$date.zip"
+    export zipname="$NAME-Kernel-$version-lavender-OLDCAM-$date.zip"
 	mkzip
 	fi
 }
@@ -75,7 +75,7 @@ build_newcam(){
     errored "Error while building newcam!"
     else
     git reset --hard
-    export zipname="$NAME-Kernel-$version-NEWCAM-$date.zip"
+    export zipname="$NAME-Kernel-$version-lavender-NEWCAM-$date.zip"
 	mkzip
 	fi
 }
