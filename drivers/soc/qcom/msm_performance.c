@@ -27,7 +27,7 @@
 #include <linux/kthread.h>
 
 static const unsigned int max_boost_freq_lp = 1536000;
-static const unsigned int max_boost_freq_perf = 1958400;
+static const unsigned int max_boost_freq_perf = 1401600;
 
 /* To handle cpufreq min/max request */
 struct cpu_status {
