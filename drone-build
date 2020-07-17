@@ -3,7 +3,7 @@ clang_path="${HOME}/cbl/bin/clang"
 gcc_path="${HOME}/cbl/bin/aarch64-linux-gnu-"
 gcc_32_path="${HOME}/cbl/bin/arm-linux-gnueabi-"
 
-NAME=IceCream
+NAME=PaperMoon
 version=R5.4
 
 source=`pwd`
@@ -53,7 +53,7 @@ clean(){
 	rm -rf out
 }
 
-export KBUILD_BUILD_USER="IceCream"
+export KBUILD_BUILD_USER="PaperMoon"
 export KBUILD_BUILD_HOST="Ratoriku"
 
 build_oldcam(){
