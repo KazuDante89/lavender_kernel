@@ -6620,12 +6620,12 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target)
 		sg = sd->groups;
 		do {
 			int i;
-			if (!cpumask_intersects(sched_group_cpus(sg),
+			if (!cpumask_intersects(sched_group_span(sg),
 						tsk_cpus_allowed(p)))
 				goto next;
 
 			if (sysctl_sched_cstate_aware) {
-				for_each_cpu_and(i, tsk_cpus_allowed(p), sched_group_cpus(sg)) {
+				for_each_cpu_and(i, tsk_cpus_allowed(p), sched_group_span(sg)) {
 					int idle_idx = idle_get_state_idx(cpu_rq(i));
 					unsigned long new_usage = boosted_task_util(p);
 					unsigned long capacity_orig = capacity_orig_of(i);
@@ -6648,12 +6648,12 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target)
 					}
 				}
 			} else {
-				for_each_cpu(i, sched_group_cpus(sg)) {
+				for_each_cpu(i, sched_group_span(sg)) {
 					if (i == target || !idle_cpu(i))
 						goto next;
 				}
 
-				target = cpumask_first_and(sched_group_cpus(sg),
+				target = cpumask_first_and(sched_group_span(sg),
 					tsk_cpus_allowed(p));
 				schedstat_inc(p, se.statistics.nr_wakeups_sis_idle_cpu);
 				schedstat_inc(this_rq(), eas_stats.sis_idle_cpu);
