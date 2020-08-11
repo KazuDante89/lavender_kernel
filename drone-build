@@ -4,7 +4,7 @@ gcc_path="${HOME}/cbl/bin/aarch64-linux-gnu-"
 gcc_32_path="${HOME}/cbl/bin/arm-linux-gnueabi-"
 
 NAME=PaperMoon
-version=R5.5
+version=R5.7-Snapshot
 
 source=`pwd`
 START=$(date +"%s")
