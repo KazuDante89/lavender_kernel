@@ -104,7 +104,9 @@ mkzip(){
 	print "Done! Check your $zipname" green
 }
 
-	telegram_notify "START BUILDING"
+	telegram_notify "Start building 
+	Version: $NAME-$version
+	Date: $date "
 	START=$(date +"%s")
 
 	build_oldcam
