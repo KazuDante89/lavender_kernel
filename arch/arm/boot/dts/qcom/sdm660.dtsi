@@ -52,6 +52,7 @@
 			reg = <0x0 0x0>;
 			clock-frequency = <1843200000>;
 			enable-method = "psci";
+			capacity-dmips-mhz = <1024>;
 			qcom,limits-info = <&mitigation_profile0>;
 			sched-energy-costs = <&CPU_COST_0 &CLUSTER_COST_0>;
 			qcom,lmh-dcvs = <&lmh_dcvs0>;
@@ -83,6 +84,7 @@
 			reg = <0x0 0x1>;
 			clock-frequency = <1843200000>;
 			enable-method = "psci";
+			capacity-dmips-mhz = <1024>;
 			qcom,limits-info = <&mitigation_profile0>;
 			sched-energy-costs = <&CPU_COST_0 &CLUSTER_COST_0>;
 			qcom,lmh-dcvs = <&lmh_dcvs0>;
@@ -108,6 +110,7 @@
 			reg = <0x0 0x2>;
 			clock-frequency = <1843200000>;
 			enable-method = "psci";
+			capacity-dmips-mhz = <1024>;
 			qcom,limits-info = <&mitigation_profile0>;
 			sched-energy-costs = <&CPU_COST_0 &CLUSTER_COST_0>;
 			qcom,lmh-dcvs = <&lmh_dcvs0>;
@@ -133,6 +136,7 @@
 			reg = <0x0 0x3>;
 			clock-frequency = <1843200000>;
 			enable-method = "psci";
+			capacity-dmips-mhz = <1024>;
 			qcom,limits-info = <&mitigation_profile0>;
 			sched-energy-costs = <&CPU_COST_0 &CLUSTER_COST_0>;
 			qcom,lmh-dcvs = <&lmh_dcvs0>;
@@ -158,6 +162,7 @@
 			reg = <0x0 0x100>;
 			clock-frequency = <2208000000>;
 			enable-method = "psci";
+			capacity-dmips-mhz = <1638>;
 			qcom,limits-info = <&mitigation_profile1>;
 			sched-energy-costs = <&CPU_COST_1 &CLUSTER_COST_1>;
 			qcom,lmh-dcvs = <&lmh_dcvs1>;
@@ -187,6 +192,7 @@
 			reg = <0x0 0x101>;
 			clock-frequency = <2208000000>;
 			enable-method = "psci";
+			capacity-dmips-mhz = <1638>;
 			qcom,limits-info = <&mitigation_profile2>;
 			sched-energy-costs = <&CPU_COST_1 &CLUSTER_COST_1>;
 			qcom,lmh-dcvs = <&lmh_dcvs1>;
@@ -212,6 +218,7 @@
 			reg = <0x0 0x102>;
 			clock-frequency = <2208000000>;
 			enable-method = "psci";
+			capacity-dmips-mhz = <1638>;
 			qcom,limits-info = <&mitigation_profile3>;
 			sched-energy-costs = <&CPU_COST_1 &CLUSTER_COST_1>;
 			qcom,lmh-dcvs = <&lmh_dcvs1>;
@@ -237,6 +244,7 @@
 			reg = <0x0 0x103>;
 			clock-frequency = <2208000000>;
 			enable-method = "psci";
+			capacity-dmips-mhz = <1638>;
 			qcom,limits-info = <&mitigation_profile4>;
 			sched-energy-costs = <&CPU_COST_1 &CLUSTER_COST_1>;
 			qcom,lmh-dcvs = <&lmh_dcvs1>;
