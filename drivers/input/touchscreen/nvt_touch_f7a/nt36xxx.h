@@ -30,7 +30,7 @@
 
 #include "../lct_tp_info.h"
 
-#define NVT_DEBUG 1
+#define NVT_DEBUG 0
 
 //---Touch Vendor ID---
 #define TP_VENDOR_UNKNOW    0x00
