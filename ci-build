@@ -4,7 +4,7 @@ gcc_path="${HOME}/cbl/bin/aarch64-linux-gnu-"
 gcc_32_path="${HOME}/cbl/bin/arm-linux-gnueabi-"
 
 NAME=MeowKernel
-version=Snapshot
+version=r20
 START=$(date +"%s")
 source=`pwd`
 date="`date +"%m%d-%H%M"`"
