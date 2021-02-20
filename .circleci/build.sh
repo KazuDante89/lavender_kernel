@@ -1,26 +1,27 @@
 #!/usr/bin/env bash
-echo "Cloning dependencies"
-git clone --depth=1 https://github.com/kdrag0n/proton-clang clang
-git clone --depth=1 https://github.com/KazuDante89/AnyKernel3-EAS -b lavender2 AnyKernel
-echo "Done"
+git clone --depth=1 https://github.com/KazuDante89/lavender_kernel -b KazuKernel kernel
+cd kerel
+git clone https://github.com/arter97/arm64-gcc --depth=1
+git clone https://github.com/arter97/arm32-gcc --depth=1
+git clone --depth=1 https://github.com/KazuDante89/AnyKernel3-EAS AnyKernel
 IMAGE=$(pwd)/out/arch/arm64/boot/Image.gz-dtb
 TANGGAL=$(date +"%F-%S")
 START=$(date +"%s")
-KERNEL_DIR=$(pwd)
-PATH="${PWD}/clang/bin:$PATH"
-export KBUILD_COMPILER_STRING="$(${KERNEL_DIR}/clang/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g')"
+export CONFIG_PATH=$PWD/arch/arm64/configs/lavender-perf_defconfig
+PATH="$(pwd)/arm64-gcc/bin:$(pwd)/arm32-gcc/bin:${PATH}" \
 export ARCH=arm64
+export USE_CCACHE=1
 export KBUILD_BUILD_HOST=circleci
-export KBUILD_BUILD_USER="kazudante89"
-# Send info plox channel
+export KBUILD_BUILD_USER="KazuDante"
+# Send info about the build to Telegram Channel/Group (Depending upon what chat_id you've specified in CircleCI Environment Variables)
 function sendinfo() {
     curl -s -X POST "https://api.telegram.org/bot$token/sendMessage" \
         -d chat_id="$chat_id" \
         -d "disable_web_page_preview=true" \
         -d "parse_mode=html" \
-        -d text="<b>• 4.4 Kazu Kernel Project •</b>%0ABuild started on <code>Circle CI</code>%0AFor device <b>Xiaomi Redmi Note7/7S</b> (lavender)%0Abranch <code>$(git rev-parse --abbrev-ref HEAD)</code>(master)%0AUnder commit <code>$(git log --pretty=format:'"%h : %s"' -1)</code>%0AUsing compiler: <code>${KBUILD_COMPILER_STRING}</code>%0AStarted on <code>$(date)</code>%0A<b>Build Status:</b>#Stable"
+        -d text="<b>Kazu Kernel Project </b>%0ABuild Status : SUCCESS%0ALast Commit Info - <code>$(git log --pretty=format:'"%h : %s"' -1)</code>" 
 }
-# Push kernel to channel
+# Push kernel to Telegram Channel/Group
 function push() {
     cd AnyKernel
     ZIP=$(echo *.zip)
@@ -28,36 +29,31 @@ function push() {
         -F chat_id="$chat_id" \
         -F "disable_web_page_preview=true" \
         -F "parse_mode=html" \
-        -F caption="Build took $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) second(s). | For <b>Xiaomi Redmi Note 7/7s (lavender)</b> | <b>$(${GCC}gcc --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g')</b>"
+        -F caption="Enjoy Lyf Now"
 }
-# Fin Error
+# Broke the process on Error countup check
 function finerr() {
     curl -s -X POST "https://api.telegram.org/bot$token/sendMessage" \
         -d chat_id="$chat_id" \
         -d "disable_web_page_preview=true" \
         -d "parse_mode=markdown" \
-        -d text="Build failed, check the circleci logs"
+          -d text="Fck Build throw error(s)"
     exit 1
 }
-# Compile plox
+# Compile the Defconfig (lavender-perf_defconfig in my case)
 function compile() {
-    make O=out ARCH=arm64 lavender-perf_defconfig
-    make -j$(nproc --all) O=out \
-                          ARCH=arm64 \
-			                    CC=clang \
-			                    CROSS_COMPILE=aarch64-linux-gnu- \
-			                    CROSS_COMPILE_ARM32=arm-linux-gnueabi-
-
-    if ! [ -a "$IMAGE" ]; then
-        finerr
-        exit 1
-    fi
-    cp out/arch/arm64/boot/Image.gz-dtb AnyKernel
+   make O=out ARCH=arm64 lavender-perf_defconfig
+     PATH="$(pwd)/arm64-gcc/bin:$(pwd)/arm32-gcc/bin:${PATH}" \
+       make -j$(nproc --all) O=out \
+                             ARCH=arm64 \
+                             CROSS_COMPILE=aarch64-elf- \
+                             CROSS_COMPILE_ARM32=arm-eabi-
+   cp out/arch/arm64/boot/Image.gz-dtb AnyKernel
 }
-# Zipping
+# Zipping (Using Anykernel Repo)
 function zipping() {
     cd AnyKernel || exit 1
-    zip -r9 [EAS]-KazuKernel_v.0.0.0.zip *
+    zip -r9 [EAS]-KazuKernel_v0.0.1.zip *
     cd ..
 }
 sendinfo
