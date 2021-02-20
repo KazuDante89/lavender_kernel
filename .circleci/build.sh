@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 git clone --depth=1 https://github.com/KazuDante89/lavender_kernel -b KazuKernel kernel
-cd kerel
+cd kernel
 git clone https://github.com/arter97/arm64-gcc --depth=1
 git clone https://github.com/arter97/arm32-gcc --depth=1
 git clone --depth=1 https://github.com/KazuDante89/AnyKernel3-EAS AnyKernel
@@ -19,7 +19,7 @@ function sendinfo() {
         -d chat_id="$chat_id" \
         -d "disable_web_page_preview=true" \
         -d "parse_mode=html" \
-        -d text="<b>Kazu Kernel Project </b>%0ABuild Status : SUCCESS%0ALast Commit Info - <code>$(git log --pretty=format:'"%h : %s"' -1)</code>" 
+        -d text="<b>Kazu Kernel Project </b>%0ABuild Status : SUCCESS%0ALast Commit Info - <code>$(git log --pretty=format:'"%h : %s"' -1)</code>"
 }
 # Push kernel to Telegram Channel/Group
 function push() {
