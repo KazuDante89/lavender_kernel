@@ -11,7 +11,7 @@
 #define __noretpoline
 #endif
 
-/* These macros are used to mark some functions or 
+/* These macros are used to mark some functions or
  * initialized data (doesn't apply to uninitialized data)
  * as `initialization' functions. The kernel can take this
  * as hint that the function is used only during the initialization
@@ -19,7 +19,7 @@
  *
  * Usage:
  * For functions:
- * 
+ *
  * You should add __init immediately before the function name, like:
  *
  * static void __init initme(int x, int y)
@@ -158,7 +158,7 @@ extern void (*late_time_init)(void);
 extern bool initcall_debug;
 
 #endif
-  
+
 #ifndef MODULE
 
 #ifndef __ASSEMBLY__
@@ -166,8 +166,8 @@ extern bool initcall_debug;
 /*
  * initcalls are now grouped by functionality into separate
  * subsections. Ordering inside the subsections is determined
- * by link order. 
- * For backwards compatibility, initcall() puts the call in 
+ * by link order.
+ * For backwards compatibility, initcall() puts the call in
  * the device init subsection.
  *
  * The `id' arg to __define_initcall() is needed so that multiple initcalls
@@ -178,33 +178,11 @@ extern bool initcall_debug;
  * and remove that completely, so the initcall sections have to be marked
  * as KEEP() in the linker script.
  */
-#ifdef CONFIG_LTO_CLANG
-  /*
-   * With LTO, the compiler doesn't necessarily obey link order for
-   * initcalls, and the initcall variable needs to be globally unique
-   * to avoid naming collisions.  In order to preserve the correct
-   * order, we add each variable into its own section and generate a
-   * linker script (in scripts/link-vmlinux.sh) to ensure the order
-   * remains correct.  We also add a __COUNTER__ prefix to the name,
-   * so we can retain the order of initcalls within each compilation
-   * unit, and __LINE__ to make the names more unique.
-   */
-  #define ___lto_initcall(c, l, fn, id, __sec) \
-	static initcall_t __initcall_##c##_##l##_##fn##id __used \
-		__attribute__((__section__( #__sec \
-			__stringify(.init..##c##_##l##_##fn)))) = fn;
-  #define __lto_initcall(c, l, fn, id, __sec) \
-	___lto_initcall(c, l, fn, id, __sec)
 
-  #define ___define_initcall(fn, id, __sec) \
-	__lto_initcall(__COUNTER__, __LINE__, fn, id, __sec)
-#else
-  #define ___define_initcall(fn, id, __sec) \
-	static initcall_t __initcall_##fn##id __used \
-		__attribute__((__section__(#__sec ".init"))) = fn;
-#endif
-
-#define __define_initcall(fn, id) ___define_initcall(fn, id, .initcall##id)
+#define __define_initcall(fn, id) \
+	static initcall_t __initcall_##fn##id __used __noreorder \
+	__attribute__((__section__(".initcall" #id ".init"))) = fn; \
+	LTO_REFERENCE_INITCALL(__initcall_##fn##id)
 
 /*
  * Early initcalls run before initializing SMP.

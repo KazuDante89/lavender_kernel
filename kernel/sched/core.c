@@ -320,6 +320,71 @@ static struct rq *this_rq_lock(void)
 	return rq;
 }
 
+/*
+ * __task_rq_lock - lock the rq @p resides on.
+ */
+struct rq *__task_rq_lock(struct task_struct *p)
+	__acquires(rq->lock)
+{
+	struct rq *rq;
+
+	lockdep_assert_held(&p->pi_lock);
+
+	for (;;) {
+		rq = task_rq(p);
+		raw_spin_lock(&rq->lock);
+		if (likely(rq == task_rq(p) && !task_on_rq_migrating(p))) {
+			lockdep_pin_lock(&rq->lock);
+			return rq;
+		}
+		raw_spin_unlock(&rq->lock);
+
+		while (unlikely(task_on_rq_migrating(p)))
+			cpu_relax();
+	}
+}
+
+/*
+ * task_rq_lock - lock p->pi_lock and lock the rq @p resides on.
+ */
+struct rq *task_rq_lock(struct task_struct *p, unsigned long *flags)
+	__acquires(p->pi_lock)
+	__acquires(rq->lock)
+{
+	struct rq *rq;
+
+	for (;;) {
+		raw_spin_lock_irqsave(&p->pi_lock, *flags);
+		rq = task_rq(p);
+		raw_spin_lock(&rq->lock);
+		/*
+		 *	move_queued_task()		task_rq_lock()
+		 *
+		 *	ACQUIRE (rq->lock)
+		 *	[S] ->on_rq = MIGRATING		[L] rq = task_rq()
+		 *	WMB (__set_task_cpu())		ACQUIRE (rq->lock);
+		 *	[S] ->cpu = new_cpu		[L] task_rq()
+		 *					[L] ->on_rq
+		 *	RELEASE (rq->lock)
+		 *
+		 * If we observe the old cpu in task_rq_lock, the acquire of
+		 * the old rq->lock will fully serialize against the stores.
+		 *
+		 * If we observe the new cpu in task_rq_lock, the acquire will
+		 * pair with the WMB to ensure we must then also see migrating.
+		 */
+		if (likely(rq == task_rq(p) && !task_on_rq_migrating(p))) {
+			lockdep_pin_lock(&rq->lock);
+			return rq;
+		}
+		raw_spin_unlock(&rq->lock);
+		raw_spin_unlock_irqrestore(&p->pi_lock, *flags);
+
+		while (unlikely(task_on_rq_migrating(p)))
+			cpu_relax();
+	}
+}
+
 #ifdef CONFIG_SCHED_HRTICK
 /*
  * Use HR-timers to deliver accurate preemption points.
@@ -1243,9 +1308,10 @@ static int __set_cpus_allowed_ptr(struct task_struct *p,
 	unsigned int dest_cpu;
 	int ret = 0;
 
-	/* Force all performance-critical kthreads onto the big cluster */
-	if (p->flags & PF_PERF_CRITICAL)
-		new_mask = cpu_perf_mask;
+	/* Don't allow perf-critical threads to have non-perf affinities */
+	if ((p->flags & PF_PERF_CRITICAL) && new_mask != cpu_lp_mask &&
+		new_mask != cpu_perf_mask)
+		return -EINVAL;
 
 	rq = task_rq_lock(p, &flags);
 
@@ -8028,6 +8094,7 @@ void __init sched_init(void)
 			rq->cpu_load[j] = 0;
 
 		rq->last_load_update_tick = jiffies;
+		rq->last_blocked_load_update_tick = jiffies;
 
 #ifdef CONFIG_SMP
 		rq->sd = NULL;

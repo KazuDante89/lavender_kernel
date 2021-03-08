@@ -286,7 +286,7 @@ static ssize_t dsi_access_sysfs_write_store(struct device *dev,
 		return count;
 }
 #endif
- 
+
 void mdss_dump_dsi_debug_bus(u32 bus_dump_flag,
 	u32 **dump_mem)
 {
@@ -1722,7 +1722,7 @@ int mdss_dsi_on(struct mdss_panel_data *pdata)
 		pr_err("%s: Invalid input data\n", __func__);
 		return -EINVAL;
 	}
-        printk("mdss_dsi_on\n");	
+        printk("mdss_dsi_on\n");
 	ctrl_pdata = container_of(pdata, struct mdss_dsi_ctrl_pdata,
 				panel_data);
 
@@ -1824,7 +1824,7 @@ int mdss_dsi_set_gamma(struct mdss_dsi_ctrl_pdata *ctrl,int val2)
 {
 	int val0,val1;
 
-	printk("guorui:%s\n",__func__);	
+	printk("guorui:%s\n",__func__);
 
 	if(!ctrl) {
 		pr_info("not available\n");
@@ -1839,12 +1839,12 @@ int mdss_dsi_set_gamma(struct mdss_dsi_ctrl_pdata *ctrl,int val2)
 			mdss_dsi_panel_cmds_send(ctrl, &ctrl->gamma0_cmds,CMD_REQ_COMMIT);
 			printk("guorui: %s ,gamma0,line %d \n",__func__,__LINE__);
             return 0;
-		}	
+		}
     }else{
         pr_err("%s:val2 not available\n",__func__);
 		return -EINVAL;
     }
-    
+
 	mdss_dsi_read_reg(ctrl,0xa1,&val0,&val1);
 
     if(0 == val0 || 0 == val1){
@@ -1861,7 +1861,7 @@ int mdss_dsi_set_gamma(struct mdss_dsi_ctrl_pdata *ctrl,int val2)
 				mdss_dsi_panel_cmds_send(ctrl, &ctrl->gamma1_cmds,CMD_REQ_COMMIT);
 				printk("guorui: %s ,gamma1,line %d \n",__func__,__LINE__);
                 return 0;
-			}	
+			}
 		}else if(val1 <= 0x70 && val1 >= 0x6c){
 			if (ctrl->gamma2_cmds.cmd_cnt){
 				mdss_dsi_panel_cmds_send(ctrl, &ctrl->gamma2_cmds,CMD_REQ_COMMIT);
@@ -1887,7 +1887,7 @@ int mdss_dsi_set_gamma(struct mdss_dsi_ctrl_pdata *ctrl,int val2)
 				mdss_dsi_panel_cmds_send(ctrl, &ctrl->gamma9_cmds,CMD_REQ_COMMIT);
 				printk("guorui: %s ,gamma9,line %d \n",__func__,__LINE__);
                 return 0;
-			}	
+			}
 		}else if(val1 <= 0x70 && val1 >= 0x6c){
 			if (ctrl->gamma10_cmds.cmd_cnt){
 				mdss_dsi_panel_cmds_send(ctrl, &ctrl->gamma10_cmds,CMD_REQ_COMMIT);
@@ -1913,7 +1913,7 @@ int mdss_dsi_set_gamma(struct mdss_dsi_ctrl_pdata *ctrl,int val2)
 				mdss_dsi_panel_cmds_send(ctrl, &ctrl->gamma13_cmds,CMD_REQ_COMMIT);
 				printk("guorui: %s ,gamma13,line %d \n",__func__,__LINE__);
                 return 0;
-			}	
+			}
 		}else if(val1 <= 0x70 && val1 >= 0x6c){
 			if (ctrl->gamma14_cmds.cmd_cnt){
 				mdss_dsi_panel_cmds_send(ctrl, &ctrl->gamma14_cmds,CMD_REQ_COMMIT);
@@ -1939,7 +1939,7 @@ int mdss_dsi_set_gamma(struct mdss_dsi_ctrl_pdata *ctrl,int val2)
 				mdss_dsi_panel_cmds_send(ctrl, &ctrl->gamma17_cmds,CMD_REQ_COMMIT);
 				printk("guorui: %s ,gamma17,line %d \n",__func__,__LINE__);
                 return 0;
-			}	
+			}
 		}else if(val1 <= 0x70 && val1 >= 0x6c){
 			if (ctrl->gamma18_cmds.cmd_cnt){
 				mdss_dsi_panel_cmds_send(ctrl, &ctrl->gamma18_cmds,CMD_REQ_COMMIT);
@@ -1965,7 +1965,7 @@ int mdss_dsi_set_gamma(struct mdss_dsi_ctrl_pdata *ctrl,int val2)
 				mdss_dsi_panel_cmds_send(ctrl, &ctrl->gamma21_cmds,CMD_REQ_COMMIT);
 				printk("guorui: %s ,gamma21,line %d \n",__func__,__LINE__);
                 return 0;
-			}	
+			}
 		}else if(val1 <= 0x70 && val1 >= 0x6c){
 			if (ctrl->gamma22_cmds.cmd_cnt){
 				mdss_dsi_panel_cmds_send(ctrl, &ctrl->gamma22_cmds,CMD_REQ_COMMIT);
@@ -4224,7 +4224,7 @@ static int mdss_dsi_ctrl_probe(struct platform_device *pdev)
 	init_completion(&ctrl_pdata->wake_comp);
 	init_waitqueue_head(&ctrl_pdata->wake_waitq);
 	ctrl_pdata->wake_thread =
-		kthread_run_perf_critical(mdss_dsi_disp_wake_thread,
+		kthread_run_perf_critical(cpu_perf_mask, mdss_dsi_disp_wake_thread,
 					  ctrl_pdata, "mdss_display_wake");
 	if (IS_ERR(ctrl_pdata->wake_thread)) {
 		rc = PTR_ERR(ctrl_pdata->wake_thread);

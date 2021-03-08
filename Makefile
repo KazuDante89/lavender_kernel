@@ -1,6 +1,6 @@
 VERSION = 4
 PATCHLEVEL = 4
-SUBLEVEL = 257
+SUBLEVEL = 259
 EXTRAVERSION =
 NAME = Blurry Fish Butt
 
@@ -341,7 +341,6 @@ include scripts/Kbuild.include
 # Make variables (CC, etc...)
 AS		= $(CROSS_COMPILE)as
 LD		= $(CROSS_COMPILE)ld
-LDGOLD		= $(CROSS_COMPILE)ld.gold
 CC		= $(CROSS_COMPILE)gcc
 CPP		= $(CC) -E
 AR		= $(CROSS_COMPILE)ar
@@ -653,6 +652,22 @@ export LLVM_AR LLVM_NM
 LDFLAGS		+= --plugin-opt=O3
 endif
 
+ifdef CONFIG_LTO
+LTO_CFLAGS    := -flto -flto=jobserver -fno-fat-lto-objects \
+                 -fuse-linker-plugin -fwhole-program
+KBUILD_CFLAGS += $(LTO_CFLAGS) --param=max-inline-insns-auto=1000
+LTO_LDFLAGS   := $(LTO_CFLAGS) -Wno-lto-type-mismatch -Wno-psabi \
+                 -Wno-stringop-overflow -flinker-output=nolto-rel
+LDFINAL       := $(CONFIG_SHELL) $(srctree)/scripts/gcc-ld $(LTO_LDFLAGS)
+AR            := $(CROSS_COMPILE)gcc-ar
+NM            := $(CROSS_COMPILE)gcc-nm
+DISABLE_LTO   := -fno-lto
+export DISABLE_LTO LDFINAL
+else
+LDFINAL       := $(LD)
+export LDFINAL
+endif
+
 # The arch Makefile can set ARCH_{CPP,A,C}FLAGS to override the default
 # values of the respective KBUILD_* variables
 ARCH_CPPFLAGS :=
@@ -676,6 +691,16 @@ KBUILD_CFLAGS	+= $(call cc-disable-warning, format-overflow)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, int-in-bool-context)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, address-of-packed-member)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, attribute-alias)
+KBUILD_CFLAGS	+= $(call cc-disable-warning, address-of-packed-member)
+KBUILD_CFLAGS	+= $(call cc-disable-warning, psabi)
+KBUILD_CFLAGS	+= $(call cc-disable-warning, restrict)
+KBUILD_CFLAGS	+= $(call cc-disable-warning, stringop-overflow)
+KBUILD_CFLAGS	+= $(call cc-disable-warning, zero-length-bounds)
+
+ifdef CONFIG_LD_DEAD_CODE_DATA_ELIMINATION
+KBUILD_CFLAGS	+= $(call cc-option,-ffunction-sections,)
+KBUILD_CFLAGS	+= $(call cc-option,-fdata-sections,)
+endif
 
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS	+= -Os
@@ -771,6 +796,9 @@ else
 # These warnings generated too much noise in a regular build.
 # Use make W=1 to enable them (see scripts/Makefile.extrawarn)
 KBUILD_CFLAGS += $(call cc-disable-warning, unused-but-set-variable)
+KBUILD_CFLAGS += $(call cc-disable-warning, attribute-alias)
+KBUILD_CFLAGS += $(call cc-disable-warning, packed-not-aligned)
+KBUILD_CFLAGS += $(call cc-disable-warning, stringop-truncation)
 endif
 
 ifeq ($(ld-name),lld)
@@ -818,6 +846,13 @@ endif
 ifdef CONFIG_FUNCTION_TRACER
 ifndef CC_FLAGS_FTRACE
 CC_FLAGS_FTRACE := -pg
+endif
+ifdef CONFIG_FTRACE_MCOUNT_RECORD
+  # gcc 5 supports generating the mcount tables directly
+  ifeq ($(call cc-option-yn,-mrecord-mcount),y)
+    CC_FLAGS_FTRACE	+= -mrecord-mcount
+    export CC_USING_RECORD_MCOUNT := 1
+  endif
 endif
 export CC_FLAGS_FTRACE
 ifdef CONFIG_HAVE_FENTRY
@@ -915,9 +950,6 @@ KBUILD_CFLAGS	+= $(call cc-option,-fmerge-constants)
 
 # Make sure -fstack-check isn't enabled (like gentoo apparently did)
 KBUILD_CFLAGS  += $(call cc-option,-fno-stack-check,)
-
-# conserve stack if available
-KBUILD_CFLAGS   += $(call cc-option,-fconserve-stack)
 
 # disallow errors like 'EXPORT_GPL(foo);' with missing header
 KBUILD_CFLAGS   += $(call cc-option,-Werror=implicit-int)

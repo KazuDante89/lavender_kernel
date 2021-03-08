@@ -183,11 +183,11 @@ static ssize_t double_tap_store(struct kobject *kobj,
                 size_t count)
 {
     int rc, val;
-    
+
     rc = kstrtoint(buf, 10, &val);
     if (rc)
     return -EINVAL;
-    
+
     enable_gesture_mode = !!val;
     return count;
 }
@@ -2088,6 +2088,7 @@ static struct i2c_driver nvt_i2c_driver = {
 #ifdef CONFIG_OF
 		.of_match_table = nvt_match_table,
 #endif
+		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
 	},
 };
 

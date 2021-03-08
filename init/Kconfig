@@ -792,19 +792,6 @@ config RCU_NOCB_CPU_ALL
 
 endchoice
 
-config RCU_EXPEDITE_BOOT
-	bool
-	default n
-	help
-	  This option enables expedited grace periods at boot time,
-	  as if rcu_expedite_gp() had been invoked early in boot.
-	  The corresponding rcu_unexpedite_gp() is invoked from
-	  rcu_end_inkernel_boot(), which is intended to be invoked
-	  at the end of the kernel-only boot sequence, just before
-	  init is exec'ed.
-
-	  Accept the default if unsure.
-
 endmenu # "RCU Subsystem"
 
 config BUILD_BIN2C
@@ -1084,23 +1071,6 @@ config CGROUP_SCHEDTUNE
 
 config PAGE_COUNTER
        bool
-
-config CGROUP_SCHEDTUNE
-	bool "CFS tasks boosting cgroup subsystem (EXPERIMENTAL)"
-	depends on SCHED_TUNE
-	help
-	  This option provides the "schedtune" controller which improves the
-	  flexibility of the task boosting mechanism by introducing the support
-	  to define "per task" boost values.
-
-	  This new controller:
-	  1. allows only a two layers hierarchy, where the root defines the
-	     system-wide boost value and its direct childrens define each one a
-	     different "class of tasks" to be boosted with a different value
-	  2. supports up to 16 different task classes, each one which could be
-	     configured with a different boost value
-
-	  Say N if unsure.
 
 config MEMCG
 	bool "Memory Resource Controller for Control Groups"
@@ -1484,6 +1454,37 @@ config CC_OPTIMIZE_FOR_SIZE
 	  If unsure, say N.
 
 endchoice
+
+config LTO
+	bool "Enable Link Time Optimization"
+	select THIN_ARCHIVES
+
+config HAVE_LD_DEAD_CODE_DATA_ELIMINATION
+	bool
+	help
+	  This requires that the arch annotates or otherwise protects
+	  its external entry points from being discarded. Linker scripts
+	  must also merge .text.*, .data.*, and .bss.* correctly into
+	  output sections. Care must be taken not to pull in unrelated
+	  sections (e.g., '.text.init'). Typically '.' in section names
+	  is used to distinguish them from label names / C identifiers.
+
+config LD_DEAD_CODE_DATA_ELIMINATION
+	bool "Dead code and data elimination (EXPERIMENTAL)"
+	depends on HAVE_LD_DEAD_CODE_DATA_ELIMINATION
+	depends on EXPERT
+	help
+	  Select this if the architecture wants to do dead code and
+	  data elimination with the linker by compiling with
+	  -ffunction-sections -fdata-sections, and linking with
+	  --gc-sections.
+
+	  This can reduce on disk and in-memory size of the kernel
+	  code and static data, particularly for small configs and
+	  on small systems. This has the possibility of introducing
+	  silently broken kernel if the required annotations are not
+	  present. This option is not well tested yet, so use at your
+	  own risk.
 
 config SYSCTL
 	bool

@@ -105,11 +105,15 @@ SCHED_FEAT(EAS_PREFER_IDLE, true)
  * ON: If the target CPU saves any energy, use that.
  * OFF: Use whichever of target or backup saves most.
  */
-SCHED_FEAT(FBT_STRICT_ORDER, true)
+SCHED_FEAT(FBT_STRICT_ORDER, false)
 
 /*
- * Inflate the effective utilization of SchedTune-boosted tasks, which
- * generally leads to usage of higher frequencies.
- * If disabled, boosts will only bias tasks to higher-capacity CPUs.
+ * Apply schedtune boost hold to tasks of all sched classes.
+ * If enabled, schedtune will hold the boost applied to a CPU
+ * for 50ms regardless of task activation - if the task is
+ * still running 50ms later, the boost hold expires and schedtune
+ * boost will expire immediately the task stops.
+ * If disabled, this behaviour will only apply to tasks of the
+ * RT class.
  */
-SCHED_FEAT(SCHEDTUNE_BOOST_UTIL, false)
+SCHED_FEAT(SCHEDTUNE_BOOST_HOLD_ALL, false)

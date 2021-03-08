@@ -996,7 +996,7 @@ int mdss_first_set_feature(struct mdss_panel_data *pdata,int first_ce_state,int 
 		pr_err("%s,not available\n",__func__);
 		return -1;
 	}
-	
+
 	if((first_ce_state != -1) || (first_cabc_state != -1) || (first_srgb_state != -1) || (first_gamma_state != -1))
 		printk("%s,first_ce_state: %d,first_cabc_state: %d,first_srgb_state=%d,first_gamma_state=%d\n",__func__,
 			first_ce_state,first_cabc_state,first_srgb_state,first_gamma_state);
@@ -1015,7 +1015,7 @@ int mdss_first_set_feature(struct mdss_panel_data *pdata,int first_ce_state,int 
 		default:
 			pr_debug("unknow cmds: %d\n", first_ce_state);
 			break;
-			
+
 	}
 	switch(first_cabc_state) {
 		case 0x1: //cabc on
@@ -1031,7 +1031,7 @@ int mdss_first_set_feature(struct mdss_panel_data *pdata,int first_ce_state,int 
 		default:
 			pr_debug("unknow cmds: %d\n", first_cabc_state);
 			break;
-			
+
 	}
 	switch(first_srgb_state) {
 		case 0x1: //srgb on
@@ -1047,7 +1047,7 @@ int mdss_first_set_feature(struct mdss_panel_data *pdata,int first_ce_state,int 
 		default:
 			pr_debug("unknow cmds: %d\n", first_srgb_state);
 			break;
-			
+
 	}
 
 	switch(first_gamma_state) {
@@ -1060,7 +1060,7 @@ int mdss_first_set_feature(struct mdss_panel_data *pdata,int first_ce_state,int 
 		default:
 			pr_debug("unknow cmds: %d\n", first_gamma_state);
 			break;
-			
+
 	}
 	switch(first_cabc_movie_state) {
 		case 0x1: //cabc movie on
@@ -1151,7 +1151,7 @@ static ssize_t mdss_fb_set_ce(struct device *dev,struct device_attribute *attr,c
 		pr_err("%s,wait first_set_bl\n",__func__);
 		return len;
 	}
- 
+
 	pr_err("tsx_###_%s,set_ce_cmd: %d\n",__func__, param);
 
 	if(ce_resume){
@@ -1174,7 +1174,7 @@ static ssize_t mdss_fb_set_ce(struct device *dev,struct device_attribute *attr,c
 		default:
 			pr_err("unknow cmds: %d\n", param);
 			break;
-			
+
 	}
 	printk("tsx ##### ce over ###\n");
 	return len;
@@ -1256,7 +1256,7 @@ static ssize_t mdss_fb_set_cabc(struct device *dev,struct device_attribute *attr
 		default:
 			pr_err("unknow cmds: %d\n", param);
 			break;
-			
+
 	}
 	printk("guorui ##### cabc over ###\n");
 	return len;
@@ -1338,7 +1338,7 @@ static ssize_t mdss_fb_set_srgb(struct device *dev,struct device_attribute *attr
 		default:
 			pr_err("unknow cmds: %d\n", param);
 			break;
-			
+
 	}
 	printk("guorui ##### srgb over ###\n");
 	return len;
@@ -2475,6 +2475,7 @@ static struct platform_driver mdss_fb_driver = {
 		.name = "mdss_fb",
 		.of_match_table = mdss_fb_dt_match,
 		.pm = &mdss_fb_pm_ops,
+		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
 	},
 };
 
@@ -2599,7 +2600,7 @@ static int mdss_fb_start_disp_thread(struct msm_fb_data_type *mfd)
 	mdss_fb_get_split(mfd);
 
 	atomic_set(&mfd->commits_pending, 0);
-	mfd->disp_thread = kthread_run_perf_critical(__mdss_fb_display_thread,
+	mfd->disp_thread = kthread_run_perf_critical(cpu_perf_mask, __mdss_fb_display_thread,
 				mfd, "mdss_fb%d", mfd->index);
 
 	if (IS_ERR(mfd->disp_thread)) {
@@ -5624,11 +5625,11 @@ int mdss_fb_atomic_commit_ioctl(struct fb_info *info,
 		.cpus_affine = ATOMIC_INIT(BIT(raw_smp_processor_id()))
 	};
 	int ret;
- 
+
 	pm_qos_add_request(&req, PM_QOS_CPU_DMA_LATENCY, 100);
 	ret = __mdss_fb_atomic_commit_ioctl(info, argp, file);
 	pm_qos_remove_request(&req);
- 
+
 	return ret;
 }
 

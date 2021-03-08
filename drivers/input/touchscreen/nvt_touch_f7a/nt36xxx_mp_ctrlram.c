@@ -1302,7 +1302,7 @@ static int32_t c_show_selftest(struct seq_file *m, void *v)
 
 	if ((TestResult_FWMutual == 0)&& (TestResult_FW_CC == 0) && (TestResult_Noise == 0)&& (TestResult_Short ==0) && (TestResult_Open == 0)){
 		nvt_mp_seq_printf(m, "Pass\n");
-	} 
+	}
 	else {
 		nvt_mp_seq_printf(m, "Fail\n");
 	}
@@ -1653,7 +1653,7 @@ static int32_t nvt_selftest_open(struct inode *inode, struct file *file)
 		 * Ex. nvt_pid = 500A
 		 *     mpcriteria = "novatek-mp-criteria-500A"
 		 */
-		snprintf(mpcriteria, PAGE_SIZE, "novatek-mp-criteria-%04X", ts->nvt_pid);
+		snprintf(mpcriteria, sizeof(mpcriteria), "novatek-mp-criteria-%04X", ts->nvt_pid);
 
 		nvt_mp_parse_dt(np, mpcriteria);
 	} else {

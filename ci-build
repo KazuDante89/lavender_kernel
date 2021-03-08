@@ -1,10 +1,9 @@
 #!/bin/bash
-clang_path="${HOME}/cbl/bin/clang"
-gcc_path="${HOME}/cbl/bin/aarch64-linux-gnu-"
-gcc_32_path="${HOME}/cbl/bin/arm-linux-gnueabi-"
+gcc_path="${HOME}/arm64-gcc/bin/aarch64-elf-"
+gcc_32_path="${HOME}/arm32-gcc/bin/arm-eabi-"
 
 NAME=MeowKernel
-version=r20
+version=r23
 START=$(date +"%s")
 source=`pwd`
 date="`date +"%m%d-%H%M"`"
@@ -35,15 +34,8 @@ case ${2} in
 	esac
 }
 
-args="CC=$clang_path \
-	CROSS_COMPILE=$gcc_path \
+args="CROSS_COMPILE=$gcc_path \
 	CROSS_COMPILE_ARM32=$gcc_32_path \
-	LLVM_AR=${HOME}/cbl/bin/llvm-ar \
-	LLVM_NM=${HOME}/cbl/bin/llvm-nm \
-	LD=${HOME}/cbl/bin/ld.lld \
-	OBJCOPY=${HOME}/cbl/bin/llvm-objcopy \
-	OBJDUMP=${HOME}/cbl/bin/llvm-objdump \
-	STRIP=${HOME}/cbl/bin/llvm-strip \
 	-j$(nproc --all) "
 
 clean(){
@@ -112,7 +104,7 @@ mkzip(){
 	print "Done! Check your $zipname" green
 }
 
-	telegram_notify "Start building 
+	telegram_notify "Start building
 	Version: $NAME-$version
 	Date: $date "
 	START=$(date +"%s")

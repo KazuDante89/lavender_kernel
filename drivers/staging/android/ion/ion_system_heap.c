@@ -436,6 +436,7 @@ static int ion_system_heap_allocate(struct ion_heap *heap,
 	}
 
 	i = 0;
+	sg = table->sgl;
 
 	/*
 	 * We now have two separate lists. One list contains pages from the

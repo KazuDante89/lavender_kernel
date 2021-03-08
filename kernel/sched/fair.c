@@ -3561,7 +3561,6 @@ util_est_dequeue(struct cfs_rq *cfs_rq, struct task_struct *p, bool task_sleep)
 {
 	long last_ewma_diff;
 	struct util_est ue;
-	int cpu;
 
 	if (!sched_feat(UTIL_EST))
 		return;
@@ -3605,14 +3604,6 @@ util_est_dequeue(struct cfs_rq *cfs_rq, struct task_struct *p, bool task_sleep)
 	 */
 	last_ewma_diff = ue.enqueued - ue.ewma;
 	if (within_margin(last_ewma_diff, (SCHED_CAPACITY_SCALE / 100)))
-		return;
-
-	/*
-	 * To avoid overestimation of actual task utilization, skip updates if
-	 * we cannot grant there is idle time in this CPU.
-	 */
-	cpu = cpu_of(rq_of(cfs_rq));
-	if (task_util(p) > capacity_orig_of(cpu))
 		return;
 
 	/*
@@ -4896,6 +4887,28 @@ static void __maybe_unused unthrottle_offline_cfs_rqs(struct rq *rq)
 		if (cfs_rq_throttled(cfs_rq))
 			unthrottle_cfs_rq(cfs_rq);
 	}
+}
+
+#ifdef CONFIG_SCHED_WALT
+static void walt_fixup_cumulative_runnable_avg_fair(struct rq *rq,
+						    struct task_struct *p,
+						    u64 new_task_load)
+{
+	struct cfs_rq *cfs_rq;
+	struct sched_entity *se = &p->se;
+	s64 task_load_delta = (s64)new_task_load - p->ravg.demand;
+
+	for_each_sched_entity(se) {
+		cfs_rq = cfs_rq_of(se);
+
+		cfs_rq->cumulative_runnable_avg += task_load_delta;
+		if (cfs_rq_throttled(cfs_rq))
+			break;
+	}
+
+	/* Fix up rq only if we didn't find any throttled cfs_rq */
+	if (!se)
+		walt_fixup_cumulative_runnable_avg(rq, p, new_task_load);
 }
 
 #ifdef CONFIG_SCHED_WALT
@@ -6449,7 +6462,8 @@ static inline bool task_fits_max(struct task_struct *p, int cpu)
 
 static bool __cpu_overutilized(int cpu, int delta)
 {
-	return (capacity_of(cpu) * 1024) < ((cpu_util(cpu) + delta) * capacity_margin);
+	return (capacity_orig_of(cpu) * 1024) <
+			((cpu_util(cpu) + delta) * capacity_margin);
 }
 
 static bool cpu_overutilized(int cpu)
@@ -6495,7 +6509,7 @@ schedtune_cpu_margin(unsigned long util, int cpu)
 {
 	int boost = schedtune_cpu_boost(cpu);
 
-	if (boost == 0)
+	if (boost == 0 || boost == 2)
 		return 0;
 
 	return schedtune_margin(util, boost, capacity_orig_of(cpu));
@@ -6508,7 +6522,7 @@ schedtune_task_margin(struct task_struct *p)
 	unsigned long util;
 	long margin;
 
-	if (boost == 0)
+	if (boost == 0 || boost == 2)
 		return 0;
 
 	util = task_util_est(p);
@@ -7396,7 +7410,7 @@ select_task_rq_fair(struct task_struct *p, int prev_cpu, int sd_flag, int wake_f
 
 		if (sysctl_sched_sync_hint_enable && sync &&
 				cpumask_test_cpu(cpu, tsk_cpus_allowed(p)) &&
-				!_wake_cap && (cpu_rq(cpu)->nr_running < 2) && 
+				!_wake_cap && (cpu_rq(cpu)->nr_running < 2) &&
 				cpu_is_in_target_set(p, cpu))
 				return cpu;
 
@@ -7409,7 +7423,7 @@ select_task_rq_fair(struct task_struct *p, int prev_cpu, int sd_flag, int wake_f
 	rcu_read_lock();
 	sd = rcu_dereference(cpu_rq(prev_cpu)->sd);
 	if (energy_aware() && sd && !sd_overutilized(sd) &&
-		(sched_feat(EAS_PREFER_IDLE) && 
+		(sched_feat(EAS_PREFER_IDLE) &&
 			!(schedtune_prefer_idle(p) > 0 && !sync))) {
 		/*
 		 * If the sync flag is set but ignored, prefer to
@@ -7682,10 +7696,10 @@ pick_next_task_fair(struct rq *rq, struct task_struct *prev)
 	int new_tasks;
 
 again:
-#ifdef CONFIG_FAIR_GROUP_SCHED
 	if (!cfs_rq->nr_running)
 		goto idle;
 
+#ifdef CONFIG_FAIR_GROUP_SCHED
 	if (prev->sched_class != &fair_sched_class)
 		goto simple;
 
@@ -7715,11 +7729,17 @@ again:
 			/*
 			 * This call to check_cfs_rq_runtime() will do the
 			 * throttle and dequeue its entity in the parent(s).
-			 * Therefore the 'simple' nr_running test will indeed
+			 * Therefore the nr_running test will indeed
 			 * be correct.
 			 */
-			if (unlikely(check_cfs_rq_runtime(cfs_rq)))
+			if (unlikely(check_cfs_rq_runtime(cfs_rq))) {
+				cfs_rq = &rq->cfs;
+
+				if (!cfs_rq->nr_running)
+					goto idle;
+
 				goto simple;
+			}
 		}
 
 		se = pick_next_entity(cfs_rq, curr);
@@ -7761,11 +7781,7 @@ again:
 
 	return p;
 simple:
-	cfs_rq = &rq->cfs;
 #endif
-
-	if (!cfs_rq->nr_running)
-		goto idle;
 
 	put_prev_task(rq, prev);
 
@@ -7946,7 +7962,7 @@ static bool yield_to_task_fair(struct rq *rq, struct task_struct *p, bool preemp
  *
  * The adjacency matrix of the resulting graph is given by:
  *
- *             log_2 n     
+ *             log_2 n
  *   A_i,j = \Union     (i % 2^k == 0) && i / 2^(k+1) == j / 2^(k+1)  (6)
  *             k = 0
  *
@@ -7992,7 +8008,7 @@ static bool yield_to_task_fair(struct rq *rq, struct task_struct *p, bool preemp
  *
  * [XXX write more on how we solve this.. _after_ merging pjt's patches that
  *      rewrite all of this once again.]
- */ 
+ */
 
 static unsigned long __read_mostly max_load_balance_interval = HZ/10;
 
@@ -8183,6 +8199,10 @@ int can_migrate_task(struct task_struct *p, struct lb_env *env)
 		schedstat_inc(p, se.statistics.nr_failed_migrations_running);
 		return 0;
 	}
+
+	/* Don't detach task if it is under active migration */
+	if (env->src_rq->push_task == p)
+		return 0;
 
 	/*
 	 * Aggressive migration if:
@@ -8433,6 +8453,9 @@ static void update_blocked_averages(int cpu)
 	}
 
 	update_rt_rq_load_avg(rq_clock_task(rq), cpu, &rq->rt, 0);
+#ifdef CONFIG_NO_HZ_COMMON
+	rq->last_blocked_load_update_tick = jiffies;
+#endif
 	raw_spin_unlock_irqrestore(&rq->lock, flags);
 }
 
@@ -8493,6 +8516,9 @@ static inline void update_blocked_averages(int cpu)
 	update_rq_clock(rq);
 	update_cfs_rq_load_avg(cfs_rq_clock_task(cfs_rq), cfs_rq, true);
 	update_rt_rq_load_avg(rq_clock_task(rq), cpu, &rq->rt, 0);
+#ifdef CONFIG_NO_HZ_COMMON
+	rq->last_blocked_load_update_tick = jiffies;
+#endif
 	raw_spin_unlock_irqrestore(&rq->lock, flags);
 }
 
@@ -8732,7 +8758,7 @@ void update_group_capacity(struct sched_domain *sd, int cpu)
 		/*
 		 * !SD_OVERLAP domains can assume that child groups
 		 * span the current group.
-		 */ 
+		 */
 
 		group = child->groups;
 		do {
@@ -8869,39 +8895,6 @@ group_type group_classify(struct sched_group *group,
 	return group_other;
 }
 
-#ifdef CONFIG_NO_HZ_COMMON
-/*
- * idle load balancing data
- *  - used by the nohz balance, but we want it available here
- *    so that we can see which CPUs have no tick.
- */
-static struct {
-	cpumask_var_t idle_cpus_mask;
-	atomic_t nr_cpus;
-	unsigned long next_balance;     /* in jiffy units */
-	unsigned long next_update;     /* in jiffy units */
-} nohz ____cacheline_aligned;
-
-static inline void update_cpu_stats_if_tickless(struct rq *rq)
-{
-	/* only called from update_sg_lb_stats when irqs are disabled */
-	if (cpumask_test_cpu(rq->cpu, nohz.idle_cpus_mask)) {
-		/* rate limit updates to once-per-jiffie at most */
-		if (READ_ONCE(jiffies) <= rq->last_load_update_tick)
-			return;
-
-		raw_spin_lock(&rq->lock);
-		update_rq_clock(rq);
-		update_idle_cpu_load(rq);
-		update_cfs_rq_load_avg(rq->clock_task, &rq->cfs, false);
-		raw_spin_unlock(&rq->lock);
-	}
-}
-
-#else
-static inline void update_cpu_stats_if_tickless(struct rq *rq) { }
-#endif
-
 /**
  * update_sg_lb_stats - Update sched_group's statistics for load balancing.
  * @env: The load balancing environment.
@@ -8924,12 +8917,6 @@ static inline void update_sg_lb_stats(struct lb_env *env,
 
 	for_each_cpu_and(i, sched_group_cpus(group), env->cpus) {
 		struct rq *rq = cpu_rq(i);
-
-		/* if we are entering idle and there are CPUs with
-		 * their tick stopped, do an update for them
-		 */
-		if (env->idle == CPU_NEWLY_IDLE)
-			update_cpu_stats_if_tickless(rq);
 
 		/* Bias balancing toward cpus of our domain */
 		if (local_group)
@@ -9035,6 +9022,9 @@ asym_packing:
 	if (!(env->sd->flags & SD_ASYM_PACKING))
 		return true;
 
+	/* No ASYM_PACKING if target cpu is already busy */
+	if (env->idle == CPU_NOT_IDLE)
+		return true;
 	/*
 	 * ASYM_PACKING needs to move all the work to the lowest
 	 * numbered CPUs in the group, therefore mark all groups
@@ -9044,7 +9034,8 @@ asym_packing:
 		if (!sds->busiest)
 			return true;
 
-		if (group_first_cpu(sds->busiest) > group_first_cpu(sg))
+		/* Prefer to move from highest possible cpu's work */
+		if (group_first_cpu(sds->busiest) < group_first_cpu(sg))
 			return true;
 	}
 
@@ -9081,6 +9072,15 @@ static inline enum fbq_type fbq_classify_rq(struct rq *rq)
 }
 #endif /* CONFIG_NUMA_BALANCING */
 
+#ifdef CONFIG_NO_HZ_COMMON
+static struct {
+	cpumask_var_t idle_cpus_mask;
+	atomic_t nr_cpus;
+	unsigned long next_balance;     /* in jiffy units */
+	unsigned long next_update;     /* in jiffy units */
+} nohz ____cacheline_aligned;
+#endif
+
 #define lb_sd_parent(sd) \
 	(sd->parent && sd->parent->groups != sd->parent->groups->next)
 
@@ -9099,6 +9099,30 @@ static inline void update_sd_lb_stats(struct lb_env *env, struct sd_lb_stats *sd
 
 	if (child && child->flags & SD_PREFER_SIBLING)
 		prefer_sibling = 1;
+
+#ifdef CONFIG_NO_HZ_COMMON
+	if (env->idle == CPU_NEWLY_IDLE) {
+		int cpu;
+
+		/* Update the stats of NOHZ idle CPUs in the sd */
+		for_each_cpu_and(cpu, sched_domain_span(env->sd),
+				 nohz.idle_cpus_mask) {
+			struct rq *rq = cpu_rq(cpu);
+
+			/* ... Unless we've already done since the last tick */
+			if (time_after(jiffies,
+                                       rq->last_blocked_load_update_tick))
+				update_blocked_averages(cpu);
+		}
+	}
+	/*
+	 * If we've just updated all of the NOHZ idle CPUs, then we can push
+	 * back the next nohz.next_update, which will prevent an unnecessary
+	 * wakeup for the nohz stats kick
+	 */
+	if (cpumask_subset(nohz.idle_cpus_mask, sched_domain_span(env->sd)))
+		nohz.next_update = jiffies + LOAD_AVG_PERIOD;
+#endif
 
 	load_idx = get_sd_load_idx(env->sd, env->idle);
 
@@ -9242,6 +9266,9 @@ static int check_asym_packing(struct lb_env *env, struct sd_lb_stats *sds)
 	int busiest_cpu;
 
 	if (!(env->sd->flags & SD_ASYM_PACKING))
+		return 0;
+
+	if (env->idle == CPU_NOT_IDLE)
 		return 0;
 
 	if (!sds->busiest)
@@ -9487,8 +9514,7 @@ static struct sched_group *find_busiest_group(struct lb_env *env)
 	busiest = &sds.busiest_stat;
 
 	/* ASYM feature bypasses nice load balance check */
-	if ((env->idle == CPU_IDLE || env->idle == CPU_NEWLY_IDLE) &&
-	    check_asym_packing(env, &sds))
+	if (check_asym_packing(env, &sds))
 		return sds.busiest;
 
 	/* There is no busy sibling group to pull tasks from */
@@ -10757,10 +10783,12 @@ static void run_rebalance_domains(struct softirq_action *h)
 	 */
 	nohz_idle_balance(this_rq, idle);
 	update_blocked_averages(this_rq->cpu);
+#ifdef CONFIG_NO_HZ_COMMON
 	if (!test_bit(NOHZ_STATS_KICK, nohz_flags(this_rq->cpu)))
 		rebalance_domains(this_rq, idle);
-#ifdef CONFIG_NO_HZ_COMMON
 	clear_bit(NOHZ_STATS_KICK, nohz_flags(this_rq->cpu));
+#else
+	rebalance_domains(this_rq, idle);
 #endif
 }
 
